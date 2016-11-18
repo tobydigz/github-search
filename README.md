@@ -1,0 +1,3 @@
+# Github Search Android App
+
+Sample Android app built for GDG DevFest South-West 2016. The app allows to search for repositories on Github by typing a query in a text field. When the query in the text field changes, a request is sent to the Github API to fetch the repositories matching the query and the result is displayed in a recycler view. The recycler view can be scrolled infinitely as new repositories are fetched when the recycler view is scrolled to the last repository.
