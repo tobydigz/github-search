@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#4a4a4a</color>
+    <color name="colorPrimaryDark">#3a3a3a</color>
+    <color name="colorAccent">#5a5a5a</color>
+    <color name="fake_toolbar_background_color">#4a4a4a</color>
+    <color name="fake_toolbar_text_color">#ffffff</color>
+    <color name="toolbar_text_color">#4a4a4a</color>
+    <color name="search_text_field_background_color">#1f4a4a4a</color>
+    <color name="search_text_field_text_color">#4a4a4a</color>
+    <color name="repository_count_text_view_background_color">#7f4a4a4a</color>
+    <color name="repository_count_text_view_text_color">#ffffff</color>
+    <color name="repository_title_text_color">#4a4a4a</color>
+    <color name="repository_url_text_color">#7f4a4a4a</color>
+    <color name="repository_view_separator_color">#c9c9ce</color>
+</resources>

@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Github Search</string>
+    <string name="search_text_field_hint">Search on Github</string>
+    <string name="repository_count_text_view_placeholder">No repository found</string>
+    <string name="no_repository_found">No repository found</string>
+    <string name="repositories_found">%1$d repositor%2$s found</string>
+    <string name="searching">Searching ...</string>
+    <string name="rate_limit_exceeded">You exceeded the limit of 10 requests per minute. Please wait %1$d second%2$s and retry.</string>
+</resources>

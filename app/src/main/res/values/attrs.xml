@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="TextView">
+        <attr name="textViewFont" format="string"/>
+    </declare-styleable>
+    <declare-styleable name="EditText">
+        <attr name="editTextFont" format="string"/>
+    </declare-styleable>
+</resources>
