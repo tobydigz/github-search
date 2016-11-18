@@ -43,10 +43,10 @@ public class MainActivity extends AppCompatActivity {
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
-
         adapter = new GithubRepositoriesAdapter();
         service = new GithubSearchHttpService(this);
         callback = new GithubSearchServiceCallback();
+
         throttler = new Timer();
 
         binding.repositoriesView.setLayoutManager(new LinearLayoutManager(this));
@@ -156,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onLimitExceeded() {
             updateUI();
-            waitForRateLimitDelay();
+            displayRateLimitMessageAndWaitForDelay();
 
             Log.e("GithubSearchService", "Rate Limit Exceeded.");
         }
@@ -181,12 +181,11 @@ public class MainActivity extends AppCompatActivity {
             }
 
             int count = adapter.getItemCount();
-            binding.repositoryCountTextView.setText(count == 0 ? getResources().getString(R.string.no_repository_found)
-                : getResources().getString(R.string.repositories_found, count, count > 1 ? "ies" : "y"));
+            binding.repositoryCountTextView.setText(count == 0 ? getResources().getString(R.string.no_repository_found) : getResources().getString(R.string.repositories_found, count, count > 1 ? "ies" : "y"));
             binding.repositoriesView.setVisibility(View.VISIBLE);
         }
 
-        private void waitForRateLimitDelay() {
+        private void displayRateLimitMessageAndWaitForDelay() {
             binding.searchTextField.setEnabled(false);
             binding.repositoriesView.setLayoutFrozen(true);
 
