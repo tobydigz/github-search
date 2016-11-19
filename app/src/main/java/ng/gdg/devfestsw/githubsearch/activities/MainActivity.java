@@ -1,6 +1,5 @@
 package ng.gdg.devfestsw.githubsearch.activities;
 
-import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -10,6 +9,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,17 +18,22 @@ import java.util.TimerTask;
 
 import ng.gdg.devfestsw.githubsearch.R;
 import ng.gdg.devfestsw.githubsearch.adapters.GithubRepositoriesAdapter;
-import ng.gdg.devfestsw.githubsearch.databinding.ActivityMainBinding;
 import ng.gdg.devfestsw.githubsearch.models.GithubError;
 import ng.gdg.devfestsw.githubsearch.models.GithubRepository;
 import ng.gdg.devfestsw.githubsearch.services.GithubSearchHttpService;
 import ng.gdg.devfestsw.githubsearch.services.GithubSearchService;
+import ng.gdg.devfestsw.githubsearch.views.EditText;
 
 public class MainActivity extends AppCompatActivity {
 
     private final static long THROTTLE_DELAY = 600;
 
-    private ActivityMainBinding binding;
+    private View root;
+    private EditText searchEditText;
+    private TextView repositoryCountTextView;
+    private RecyclerView repositoriesView;
+    private View searchProgressBar;
+    private View loadNextPageProgressBar;
 
     private GithubSearchService service;
     private GithubSearchServiceCallback callback;
@@ -41,49 +46,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+        setContentView(R.layout.activity_main);
 
-        adapter = new GithubRepositoriesAdapter();
-        service = new GithubSearchHttpService(this);
-        callback = new GithubSearchServiceCallback();
-
-        throttler = new Timer();
-
-        binding.repositoriesView.setLayoutManager(new LinearLayoutManager(this));
-        binding.repositoriesView.setAdapter(adapter);
-        binding.repositoriesView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-
-                LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
-                int lastItemPosition = layoutManager.findLastCompletelyVisibleItemPosition();
-
-                if (lastItemPosition != RecyclerView.NO_POSITION && lastItemPosition == adapter.getItemCount() - 1) {
-                    binding.loadNextPageProgressBar.setVisibility(View.VISIBLE);
-
-                    callback.isLoadingNextPage = true;
-                    callback.isSearching = false;
-                    service.loadNextPage(callback);
-                }
-            }
-        });
-
-        binding.searchTextField.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                service.cancel();
-            }
-
-            @Override
-            public void onTextChanged(CharSequence text, int start, int before, int count) {
-            }
-
-            @Override
-            public void afterTextChanged(final Editable s) {
-                throttleSearchRequest(s.toString());
-            }
-        });
+        setupViews();
+        setupGithubService();
+        setupSearchEditText();
+        setupRepositoriesView();
+        setupThrottler();
     }
 
     private void throttleSearchRequest(String query) {
@@ -91,17 +60,17 @@ public class MainActivity extends AppCompatActivity {
 
         cancelThrottledSearchRequests();
 
-        binding.repositoryCountTextView.setText(R.string.searching);
-        binding.searchProgressBar.setVisibility(View.VISIBLE);
-        binding.repositoriesView.setVisibility(View.INVISIBLE);
+        repositoryCountTextView.setText(R.string.searching);
+        searchProgressBar.setVisibility(View.VISIBLE);
+        repositoriesView.setVisibility(View.INVISIBLE);
 
         if (query.trim().isEmpty()) {
             service.cancel();
             adapter.setRepositories(new ArrayList<GithubRepository>());
 
-            binding.repositoryCountTextView.setText(R.string.no_repository_found);
-            binding.searchProgressBar.setVisibility(View.INVISIBLE);
-            binding.repositoriesView.setVisibility(View.VISIBLE);
+            repositoryCountTextView.setText(R.string.no_repository_found);
+            searchProgressBar.setVisibility(View.INVISIBLE);
+            repositoriesView.setVisibility(View.VISIBLE);
             return;
         }
 
@@ -128,6 +97,66 @@ public class MainActivity extends AppCompatActivity {
             throttler = null;
             throttler = new Timer();
         }
+    }
+
+    private void setupGithubService() {
+        service = new GithubSearchHttpService(this);
+        callback = new GithubSearchServiceCallback();
+    }
+
+    private void setupViews() {
+        root = findViewById(R.id.activity_main);
+        searchEditText = (EditText) findViewById(R.id.search_text_field);
+        repositoryCountTextView = (TextView) findViewById(R.id.repository_count_text_view);
+        repositoriesView = (RecyclerView) findViewById(R.id.repositories_view);
+        searchProgressBar = findViewById(R.id.search_progress_bar);
+        loadNextPageProgressBar = findViewById(R.id.load_next_page_progress_bar);
+    }
+
+    private void setupSearchEditText() {
+        searchEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                service.cancel();
+            }
+
+            @Override
+            public void onTextChanged(CharSequence text, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(final Editable s) {
+                throttleSearchRequest(s.toString());
+            }
+        });
+    }
+
+    private void setupRepositoriesView() {
+        adapter = new GithubRepositoriesAdapter();
+
+        repositoriesView.setLayoutManager(new LinearLayoutManager(this));
+        repositoriesView.setAdapter(adapter);
+        repositoriesView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                int lastItemPosition = layoutManager.findLastCompletelyVisibleItemPosition();
+
+                if (lastItemPosition != RecyclerView.NO_POSITION && lastItemPosition == adapter.getItemCount() - 1) {
+                    loadNextPageProgressBar.setVisibility(View.VISIBLE);
+
+                    callback.isLoadingNextPage = true;
+                    callback.isSearching = false;
+                    service.loadNextPage(callback);
+                }
+            }
+        });
+    }
+
+    private void setupThrottler() {
+        throttler = new Timer();
     }
 
     class GithubSearchServiceCallback implements GithubSearchService.Callback {
@@ -175,21 +204,21 @@ public class MainActivity extends AppCompatActivity {
 
         private void updateUI() {
             if (isSearching) {
-                binding.searchProgressBar.setVisibility(View.INVISIBLE);
+                searchProgressBar.setVisibility(View.INVISIBLE);
             } else if (isLoadingNextPage) {
-                binding.loadNextPageProgressBar.setVisibility(View.GONE);
+                loadNextPageProgressBar.setVisibility(View.GONE);
             }
 
             int count = adapter.getItemCount();
-            binding.repositoryCountTextView.setText(count == 0 ? getResources().getString(R.string.no_repository_found) : getResources().getString(R.string.repositories_found, count, count > 1 ? "ies" : "y"));
-            binding.repositoriesView.setVisibility(View.VISIBLE);
+            repositoryCountTextView.setText(count == 0 ? getResources().getString(R.string.no_repository_found) : getResources().getString(R.string.repositories_found, count, count > 1 ? "ies" : "y"));
+            repositoriesView.setVisibility(View.VISIBLE);
         }
 
         private void displayRateLimitMessageAndWaitForDelay() {
-            binding.searchTextField.setEnabled(false);
-            binding.repositoriesView.setLayoutFrozen(true);
+            searchEditText.setEnabled(false);
+            repositoriesView.setLayoutFrozen(true);
 
-            final Snackbar snackbar = Snackbar.make(binding.activityMain, getResources().getString(R.string.rate_limit_exceeded, 60, "s"), Snackbar.LENGTH_INDEFINITE);
+            final Snackbar snackbar = Snackbar.make(root, getResources().getString(R.string.rate_limit_exceeded, 60, "s"), Snackbar.LENGTH_INDEFINITE);
             snackbar.show();
 
             final Timer timer = new Timer();
@@ -207,8 +236,8 @@ public class MainActivity extends AppCompatActivity {
                                 snackbar.dismiss();
                                 timer.cancel();
 
-                                binding.searchTextField.setEnabled(true);
-                                binding.repositoriesView.setLayoutFrozen(false);
+                                searchEditText.setEnabled(true);
+                                repositoriesView.setLayoutFrozen(false);
 
                                 return;
                             }
